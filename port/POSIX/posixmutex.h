@@ -21,70 +21,30 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "../include/logdispatcher.h"
-#include "../port/mutex.h"
+#ifndef POSIXMUTEX_H
+#define POSIXMUTEX_H
 
-#ifndef LOGGER_DEBUG_PREFIX
-#define LOGGER_DEBUG_PREFIX         "[debug] "
-#endif
-#ifndef LOGGER_ERROR_PREFIX
-#define LOGGER_ERROR_PREFIX         "[error] "
-#endif
-
+#include "../mutex.h"
+#include <pthread.h>
 
 namespace jacl
 {
 
-LogDispatcher::LogDispatcher(uint32_t mask)
-    :mMask(mask)
+class PosixMutex : public Mutex
 {
-}
+public:
+    PosixMutex();
+    ~PosixMutex();
 
-LogDispatcher::~LogDispatcher()
-{
-}
+    virtual bool lock();
+    virtual bool lock(uint32_t usecs);
+    virtual bool tryLock();
+    virtual bool unlock();
 
-void LogDispatcher::infoMessage(const char *message, int len)
-{
-    fprintf(stdout, "%.*s", len, message);
-    fflush(stdout);
-}
-
-void LogDispatcher::debugMessage(const char *message, int len)
-{
-    fprintf(stdout, LOGGER_DEBUG_PREFIX"%.*s", len, message);
-    fflush(stdout);
-}
-
-void LogDispatcher::errorMessage(const char *message, int len)
-{
-    fprintf(stderr, LOGGER_ERROR_PREFIX"%.*s", len, message);
-    fflush(stdout);
-}
-
-void LogDispatcher::sink(uint32_t type, const char *message, int len)
-{
-    switch(type)
-    {
-    case LOG_INFO:
-        if(mMask && LOG_INFO)
-            infoMessage(message, len);
-        break;
-    case LOG_DEBUG:
-        if(mMask && LOG_DEBUG)
-            debugMessage(message, len);
-        break;
-    case LOG_ERROR:
-        if(mMask && LOG_ERROR)
-            errorMessage(message, len);
-        break;
-    default: break;
-    }
-}
-
-void LogDispatcher::sink(uint32_t type, std::string &message)
-{
-    sink(type, message.c_str());
-}
+private:
+    pthread_mutex_t mMutex;
+};
 
 }
+
+#endif // POSIXMUTEX_H

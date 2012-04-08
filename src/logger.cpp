@@ -57,6 +57,12 @@ Logger::Logger()
     mMutex = getPlatfromSpecificMutex();
 }
 
+Logger::Logger(int)
+{
+    mMutex = getPlatfromSpecificMutex();
+    mDestinations.push_back(new LogDispatcher);
+}
+
 Logger::~Logger()
 {
     std::for_each(mDestinations.begin(), mDestinations.end(), grimDestructor<LogDispatcher>);
@@ -174,7 +180,7 @@ void Logger::Error(const std::string & fmt, ...)
     va_end(vl);
 }
 
-Logger Logger::Default;
+Logger Logger::Default(0);
 
 void Logger::mRelay(LogDispatcher::LogType type, const char *fmt, va_list vl)
 {

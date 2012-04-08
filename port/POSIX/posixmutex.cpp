@@ -21,70 +21,48 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "../include/logdispatcher.h"
-#include "../port/mutex.h"
-
-#ifndef LOGGER_DEBUG_PREFIX
-#define LOGGER_DEBUG_PREFIX         "[debug] "
-#endif
-#ifndef LOGGER_ERROR_PREFIX
-#define LOGGER_ERROR_PREFIX         "[error] "
-#endif
-
+#include "posixmutex.h"
 
 namespace jacl
 {
 
-LogDispatcher::LogDispatcher(uint32_t mask)
-    :mMask(mask)
+PosixMutex::PosixMutex()
 {
+    pthread_mutex_init(&mMutex, 0);
 }
 
-LogDispatcher::~LogDispatcher()
+PosixMutex::~PosixMutex()
 {
+    pthread_mutex_destroy(&mMutex);
 }
 
-void LogDispatcher::infoMessage(const char *message, int len)
+bool PosixMutex::lock()
 {
-    fprintf(stdout, "%.*s", len, message);
-    fflush(stdout);
+    return pthread_mutex_lock(&mMutex);
 }
 
-void LogDispatcher::debugMessage(const char *message, int len)
+bool PosixMutex::lock(uint32_t usecs)
 {
-    fprintf(stdout, LOGGER_DEBUG_PREFIX"%.*s", len, message);
-    fflush(stdout);
+    timespec interval;
+    interval.tv_sec = usecs / 1000000;
+    usecs -= interval.tv_sec * 1000000;
+    interval.tv_nsec = usecs * 1000;
+    return pthread_mutex_timedlock(&mMutex, &interval);
 }
 
-void LogDispatcher::errorMessage(const char *message, int len)
+bool PosixMutex::tryLock()
 {
-    fprintf(stderr, LOGGER_ERROR_PREFIX"%.*s", len, message);
-    fflush(stdout);
+    return pthread_mutex_trylock(&mMutex);
 }
 
-void LogDispatcher::sink(uint32_t type, const char *message, int len)
+bool PosixMutex::unlock()
 {
-    switch(type)
-    {
-    case LOG_INFO:
-        if(mMask && LOG_INFO)
-            infoMessage(message, len);
-        break;
-    case LOG_DEBUG:
-        if(mMask && LOG_DEBUG)
-            debugMessage(message, len);
-        break;
-    case LOG_ERROR:
-        if(mMask && LOG_ERROR)
-            errorMessage(message, len);
-        break;
-    default: break;
-    }
+    return pthread_mutex_unlock(&mMutex);
 }
 
-void LogDispatcher::sink(uint32_t type, std::string &message)
+Mutex * getPlatfromSpecificMutex()
 {
-    sink(type, message.c_str());
+    return new PosixMutex;
 }
 
 }

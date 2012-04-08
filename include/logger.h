@@ -40,6 +40,8 @@ class Logger
 {
 public:
     Logger();
+    /// Autoinclude stdout/stderr to destinations
+    Logger(int);
     ~Logger();
 
     void info(const char * fmt, ...);

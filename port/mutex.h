@@ -24,17 +24,19 @@
 #ifndef MUTEX_H
 #define MUTEX_H
 
+#include <stdint.h>
+
 namespace jacl
 {
 
 class Mutex
 {
 public:
-    Mutex();
-    virtual ~Mutex() = 0;
+    Mutex() {}
+    virtual ~Mutex() {}
 
     virtual bool lock() = 0;
-    virtual bool lock(int usecs) = 0;
+    virtual bool lock(uint32_t usecs) = 0;
     virtual bool tryLock() = 0;
     virtual bool unlock() = 0;
 };
