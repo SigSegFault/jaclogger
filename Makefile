@@ -1,3 +1,4 @@
+# Yeah, currently only unices supported
 CXX = g++
 LD = gcc
 AR = ar
@@ -7,7 +8,7 @@ MKDIR = mkdir -p
 CXXFLAGS = -g -Wall
 LDFLAS =
 
-BINDIR = bin
+BINDIR = lib
 OBJDIR = obj
 SRCDIR = src
 INCLUDEDIR = include
@@ -23,6 +24,8 @@ LIBS = -L/usr/lib -L/usr/local/lib -lc
 
 SOURCES = logger.cpp logdispatcher.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
+
+# Should be fixed in the future
 
 RMLIST = $(addprefix $(OBJDIR)/, $(OBJECTS))
 RMLIST += $(BINDIR)/$(LIBSTATIC) $(BINDIR)/$(LIBSHARED)
