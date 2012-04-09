@@ -29,12 +29,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "config.h"
 #include "logdispatcher.h"
 
 namespace jacl
 {
-
-class Mutex;
 
 class Logger
 {
@@ -44,38 +44,35 @@ public:
     Logger(int);
     ~Logger();
 
-    void info(const char * fmt, ...);
+    Logger & info(const char * fmt, ...);
     /// Assumed to be of current log level
-    void debug(const char * fmt, ...);
-    void debug(uint32_t level, const char * fmt, ...);
-    void error(const char * fmt, ...);
+    Logger & debug(const char * fmt, ...);
+    Logger & debug(uint32_t level, const char * fmt, ...);
+    Logger & error(const char * fmt, ...);
 
-    inline int debugLevel() {return mDebugLevel;}
-    inline void setDebuglevel(int lvl) {mDebugLevel = lvl;}
+    int debugLevel();
+    Logger & setDebuglevel(int lvl);
 
-    const std::string & prefix() {return mPrefix;}
-    void setPrefix(const char * prefix) {mPrefix = prefix;}
-    void setPrefix(const std::string & prefix) {mPrefix = prefix;}
-    void setPrefix(const char * fmt, ...);
+    const std::string prefix();
+    Logger & setPrefix(const std::string & prefix);
+    Logger & setPrefix(const char * fmt, ...);
 
 
     /// Lazy programmer API. Executes on default logger.
 
-    static void Debug(const char * fmt, ...);
-    static void Debug(uint32_t level, const char * fmt, ...);
-    static void Error(const char * fmt, ...);
+    static Logger & Debug(const char * fmt, ...);
+    static Logger & Debug(uint32_t level, const char * fmt, ...);
+    static Logger & Error(const char * fmt, ...);
 
-    static void Debug(const std::string & fmt, ...);
-    static void Debug(uint32_t level, const std::string & fmt, ...);
-    static void Error(const std::string & fmt, ...);
+    static Logger & Debug(const std::string & fmt, ...);
+    static Logger & Debug(uint32_t level, const std::string & fmt, ...);
+    static Logger & Error(const std::string & fmt, ...);
 
-    /// By default uses LogDispatcher
-    static Logger Default;
+    /// By default uses one destination: LogDispatcher
+    static Logger & getDefault();
 private:
     Logger(const Logger &);
     void operator=(const Logger &);
-
-    //enum LogType {LOG_DUMMY, LOG_STD_AUTO, LOG_STDOUT, LOG_STDERR, LOG_FILE, LOG_FD, LOG_UDP, LOG_SYSLOG};
 
     void mRelay(LogDispatcher::LogType type, const char * fmt, va_list vl);
 
@@ -85,6 +82,25 @@ private:
     uint32_t        mDebugLevel;
     std::string     mPrefix;
 };
+
+#ifdef THREAD_SAFE_LOGGER
+// * Here is where magic begins. Whenever nasty programmer tries to create
+//   threads at static initialization time and includes this header, our magical
+//   slave uses his magical 'order of initialization' power and always does
+//   default Logger intialization before anyone else in this multithreaded world.
+//
+// * The only pitfall i can see is that Logger object will be always created,
+//   even if it hadn't been used during program execution. But it's pretty light.
+//
+// * As long as default Logger is singleton this also guarantees correct
+//   library initialization order.
+class __MagicalInitializationSlave
+{
+public:
+    __MagicalInitializationSlave() {Logger::getDefault();}
+};
+static const __MagicalInitializationSlave __magicalInitializerSlave;
+#endif
 
 }
 

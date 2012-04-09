@@ -21,70 +21,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "../include/logdispatcher.h"
-#include "../port/mutex.h"
+#ifndef LOGTOSTDCOLOURED_H
+#define LOGTOSTDCOLOURED_H
 
-#ifndef LOGGER_DEBUG_PREFIX
-#define LOGGER_DEBUG_PREFIX         "[debug] "
-#endif
-#ifndef LOGGER_ERROR_PREFIX
-#define LOGGER_ERROR_PREFIX         "[error] "
-#endif
-
+#include "logdispatcher.h"
 
 namespace jacl
 {
 
-LogDispatcher::LogDispatcher(uint32_t mask)
-    :mMask(mask)
+class LogToStdColoured : public LogDispatcher
 {
-}
+public:
+    LogToStdColoured();
+    virtual ~LogToStdColoured();
 
-LogDispatcher::~LogDispatcher()
-{
-}
-
-void LogDispatcher::infoMessage(const char *message, int len)
-{
-    fprintf(stdout, "%.*s", len, message);
-    fflush(stdout);
-}
-
-void LogDispatcher::debugMessage(const char *message, int len)
-{
-    fprintf(stdout, LOGGER_DEBUG_PREFIX"%.*s", len, message);
-    fflush(stdout);
-}
-
-void LogDispatcher::errorMessage(const char *message, int len)
-{
-    fprintf(stderr, LOGGER_ERROR_PREFIX"%.*s", len, message);
-    fflush(stderr);
-}
-
-void LogDispatcher::sink(uint32_t type, const char *message, int len)
-{
-    switch(type)
-    {
-    case LOG_INFO:
-        if(mMask && LOG_INFO)
-            infoMessage(message, len);
-        break;
-    case LOG_DEBUG:
-        if(mMask && LOG_DEBUG)
-            debugMessage(message, len);
-        break;
-    case LOG_ERROR:
-        if(mMask && LOG_ERROR)
-            errorMessage(message, len);
-        break;
-    default: break;
-    }
-}
-
-void LogDispatcher::sink(uint32_t type, std::string &message)
-{
-    sink(type, message.c_str());
-}
+protected:
+    virtual void infoMessage(const char * message, int len);
+    virtual void debugMessage(const char * message, int len);
+    virtual void errorMessage(const char * message, int len);
+};
 
 }
+
+#endif // LOGTOSTDCOLOURED_H

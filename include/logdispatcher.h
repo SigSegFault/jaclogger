@@ -44,7 +44,7 @@ public:
     enum LogType {LOG_INFO = 0x1, LOG_DEBUG = 0x2, LOG_ERROR = 0x4};
 
     LogDispatcher(uint32_t mask = (LOG_INFO|LOG_DEBUG|LOG_ERROR));
-    virtual ~LogDispatcher();
+    virtual ~LogDispatcher() = 0;
 
     uint32_t mask() {return mMask;}
     void setMask(uint32_t mask) {mMask = mask;}
@@ -52,9 +52,9 @@ public:
     void unblock(LogType type) {mMask = mMask & ~type;}
 
 protected:
-    virtual void infoMessage(const char * message, int len);
-    virtual void debugMessage(const char * message, int len);
-    virtual void errorMessage(const char * message, int len);
+    virtual void infoMessage(const char * message, int len) = 0;
+    virtual void debugMessage(const char * message, int len) = 0;
+    virtual void errorMessage(const char * message, int len) = 0;
 
 private:
     friend class Logger;

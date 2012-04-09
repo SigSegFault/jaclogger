@@ -22,8 +22,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "logger.h"
-#include "../port/mutex.h"
-#include "logdispatcher.h"
+#include "logtostd.h"
 
 #include <algorithm>
 #include <stdarg.h>
@@ -32,6 +31,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef THREAD_SAFE_LOGGER
+#include "../port/mutex.h"
+#else
+//class Mutex {};
+#endif
 
 #define CSTRING_LEN(str)            (sizeof(str) -1)
 #define DEFINE_CSTRING(name, value) static const char * name = value; static const uint32_t name##_len = CSTRING_LEN(value);
@@ -52,58 +57,113 @@ DEFINE_CSTRING(alloc_error_str, ALLOC_ERROR_STRING)
 template <typename Poor>
 void grimDestructor(Poor * thingy) { delete thingy;}
 
+template <typename Thingy>
+class PointerGuard
+{
+    PointerGuard(Thingy * thingy);
+};
+
 Logger::Logger()
 {
+#ifdef THREAD_SAFE_LOGGER
     mMutex = getPlatfromSpecificMutex();
+#endif
 }
 
 Logger::Logger(int)
 {
+#ifdef THREAD_SAFE_LOGGER
     mMutex = getPlatfromSpecificMutex();
-    mDestinations.push_back(new LogDispatcher);
+#endif
+    mDestinations.push_back(new LogToStd);
 }
 
 Logger::~Logger()
 {
     std::for_each(mDestinations.begin(), mDestinations.end(), grimDestructor<LogDispatcher>);
     mDestinations.clear();
+#ifdef THREAD_SAFE_LOGGER
     delete mMutex;
+#endif
 }
 
-void Logger::info(const char *fmt, ...)
+Logger & Logger::info(const char *fmt, ...)
 {
     va_list vl;
     va_start(vl, fmt);
     mRelay(LogDispatcher::LOG_INFO, fmt, vl);
     va_end(vl);
+    return *this;
 }
 
-void Logger::debug(const char *fmt, ...)
+Logger & Logger::debug(const char *fmt, ...)
 {
     va_list vl;
     va_start(vl, fmt);
     mRelay(LogDispatcher::LOG_DEBUG, fmt, vl);
     va_end(vl);
+    return *this;
 }
 
-void Logger::debug(uint32_t level, const char *fmt, ...)
+Logger & Logger::debug(uint32_t level, const char *fmt, ...)
 {
-    if(level > mDebugLevel) return;
+    {
+#ifdef THREAD_SAFE_LOGGER
+        ScopedGuard gandalf(this->mMutex);
+#endif
+        if(level > mDebugLevel) return *this;
+    }
     va_list vl;
     va_start(vl, fmt);
     mRelay(LogDispatcher::LOG_DEBUG, fmt, vl);
     va_end(vl);
+    return *this;
 }
 
-void Logger::error(const char *fmt, ...)
+Logger & Logger::error(const char *fmt, ...)
 {
     va_list vl;
     va_start(vl, fmt);
     mRelay(LogDispatcher::LOG_ERROR, fmt, vl);
     va_end(vl);
+    return *this;
 }
 
-void Logger::setPrefix(const char * fmt, ...)
+int Logger::debugLevel()
+{
+#ifdef THREAD_SAFE_LOGGER
+    ScopedGuard gandalf(this->mMutex);
+#endif
+    return mDebugLevel;
+}
+
+Logger & Logger::setDebuglevel(int lvl)
+{
+#ifdef THREAD_SAFE_LOGGER
+    ScopedGuard gandalf(this->mMutex);
+#endif
+    mDebugLevel = lvl;
+    return *this;
+}
+
+const std::string Logger::prefix()
+{
+#ifdef THREAD_SAFE_LOGGER
+    ScopedGuard gandalf(this->mMutex);
+#endif
+    return mPrefix;
+}
+
+Logger & Logger::setPrefix(const std::string & prefix)
+{
+#ifdef THREAD_SAFE_LOGGER
+    ScopedGuard gandalf(this->mMutex);
+#endif
+    mPrefix = prefix;
+    return *this;
+}
+
+Logger & Logger::setPrefix(const char * fmt, ...)
 {
     va_list vl;
     va_start(vl, fmt);
@@ -117,73 +177,91 @@ void Logger::setPrefix(const char * fmt, ...)
         if(dBuf)
         {
             vsnprintf(dBuf, size + 2, fmt, vl);
-            dBuf[size++] = '\n';
+#ifdef THREAD_SAFE_LOGGER
+            ScopedGuard gandalf(this->mMutex);
+#endif
             mPrefix = dBuf;
         }
         // I believe it's better just to ignore malloc error rather than abort whole execution.
     }
     else
     {
-        sBuf[size++] = '\n';
+#ifdef THREAD_SAFE_LOGGER
+        ScopedGuard gandalf(this->mMutex);
+#endif
         mPrefix = sBuf;
     }
     va_end(vl);
+    return *this;
 }
 
-void Logger::Debug(const char * fmt, ...)
+Logger & Logger::Debug(const char * fmt, ...)
 {
     va_list vl;
     va_start(vl, fmt);
-    Default.mRelay(LogDispatcher::LOG_DEBUG, fmt, vl);
+    getDefault().mRelay(LogDispatcher::LOG_DEBUG, fmt, vl);
     va_end(vl);
+    return getDefault();
 }
 
-void Logger::Debug(uint32_t level, const char * fmt, ...)
+Logger & Logger::Debug(uint32_t level, const char * fmt, ...)
 {
-    if(level > Default.mDebugLevel) return;
+    if(level > getDefault().mDebugLevel) return getDefault();
     va_list vl;
     va_start(vl, fmt);
-    Default.mRelay(LogDispatcher::LOG_DEBUG, fmt, vl);
+    getDefault().mRelay(LogDispatcher::LOG_DEBUG, fmt, vl);
     va_end(vl);
+    return getDefault();
 }
 
-void Logger::Error(const char * fmt, ...)
-{
-    va_list vl;
-    va_start(vl, fmt);
-    Default.mRelay(LogDispatcher::LOG_ERROR, fmt, vl);
-    va_end(vl);
-}
-
-void Logger::Debug(const std::string & fmt, ...)
+Logger & Logger::Error(const char * fmt, ...)
 {
     va_list vl;
     va_start(vl, fmt);
-    Default.mRelay(LogDispatcher::LOG_DEBUG, fmt.c_str(), vl);
+    getDefault().mRelay(LogDispatcher::LOG_ERROR, fmt, vl);
     va_end(vl);
+    return getDefault();
 }
 
-void Logger::Debug(uint32_t level, const std::string & fmt, ...)
-{
-    if(level > Default.mDebugLevel) return;
-    va_list vl;
-    va_start(vl, fmt);
-    Default.mRelay(LogDispatcher::LOG_DEBUG, fmt.c_str(), vl);
-    va_end(vl);
-}
-
-void Logger::Error(const std::string & fmt, ...)
+Logger & Logger::Debug(const std::string & fmt, ...)
 {
     va_list vl;
     va_start(vl, fmt);
-    Default.mRelay(LogDispatcher::LOG_ERROR, fmt.c_str(), vl);
+    getDefault().mRelay(LogDispatcher::LOG_DEBUG, fmt.c_str(), vl);
     va_end(vl);
+    return getDefault();
 }
 
-Logger Logger::Default(0);
+Logger & Logger::Debug(uint32_t level, const std::string & fmt, ...)
+{
+    if(level > getDefault().mDebugLevel) return getDefault();
+    va_list vl;
+    va_start(vl, fmt);
+    getDefault().mRelay(LogDispatcher::LOG_DEBUG, fmt.c_str(), vl);
+    va_end(vl);
+    return getDefault();
+}
+
+Logger & Logger::Error(const std::string & fmt, ...)
+{
+    va_list vl;
+    va_start(vl, fmt);
+    getDefault().mRelay(LogDispatcher::LOG_ERROR, fmt.c_str(), vl);
+    va_end(vl);
+    return getDefault();
+}
+
+Logger & Logger::getDefault()
+{
+    static Logger def(0);
+    return def;
+}
 
 void Logger::mRelay(LogDispatcher::LogType type, const char *fmt, va_list vl)
 {
+#ifdef THREAD_SAFE_LOGGER
+    ScopedGuard gandalf(this->mMutex);
+#endif
     char sBuf[4096];
     char * dBuf = sBuf;
     uint32_t prefixLen = mPrefix.size();
@@ -213,12 +291,14 @@ void Logger::mRelay(LogDispatcher::LogType type, const char *fmt, va_list vl)
         memcpy(sBuf, mPrefix.c_str(), prefixLen);
         sBuf[size++] = '\n';
     }
-    {
-        ScopedGuard(this->mMutex);
-        for(DispatcherList::const_iterator it = mDestinations.begin();
-            it != mDestinations.end(); ++it)
-            (*it)->sink(type, dBuf, size);
-    }
+
+#ifdef THREAD_SAFE_LOGGER
+    gandalf.release();
+#endif
+
+    for(DispatcherList::const_iterator it = mDestinations.begin();
+        it != mDestinations.end(); ++it)
+        (*it)->sink(type, dBuf, size);
     if(dBuf != sBuf) free(dBuf);
 }
 

@@ -2,3 +2,4 @@
 jaclogger.*
 lib
 obj
+include/config.h
