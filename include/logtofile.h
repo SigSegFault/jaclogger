@@ -21,25 +21,45 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef LOGTOSTDCOLOURED_H
-#define LOGTOSTDCOLOURED_H
+#ifndef LOGTOFILE_H
+#define LOGTOFILE_H
 
-#include "logdispatcher.h"
+#include "synchronouslogdispatcher.h"
+#include <string>
+
+#if     !defined(POSIX) && !defined(_POSIX) && !defined(_POSIX_SOURCE)
+#include <stdio.h>
+#endif
 
 namespace jacl
 {
 
-class LogToStdColoured : public LogDispatcher
+class LogToFile : public SynchronousLogDispatcher
 {
 public:
-    // Todo: colours
+    LogToFile(const char * filename = 0);
+    LogToFile(const std::string & filename = std::string());
+
+    LogToFile & setFilename(const std::string & filename);
+    inline const std::string & filename() {return mFilename;}
+
+    LogToFile & close();
 
 protected:
     virtual void infoMessage(const char * message, int len);
     virtual void debugMessage(const char * message, int len);
     virtual void errorMessage(const char * message, int len);
+
+private:
+#if     defined(POSIX) || defined(_POSIX) || defined(_POSIX_SOURCE)
+    int         mFd;
+#else
+    FILE *      mFile;
+#endif
+    std::string mFilename;
 };
+
 
 }
 
-#endif // LOGTOSTDCOLOURED_H
+#endif // LOGTOFILE_H

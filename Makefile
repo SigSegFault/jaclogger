@@ -25,7 +25,8 @@ LIBSHARED = $(BINDIR)/$(LIBPREFIX)$(LIBNAME).so
 INCLUDES = -I/usr/include -I/usr/local/include -I./include
 LIBS = -L/usr/lib -L/usr/local/lib -lc -lpthread
 
-SOURCES = logger.cpp logdispatcher.cpp logtostd.cpp logtostdcoloured.cpp synchronouslogdispatcher.cpp
+SOURCES = logger.cpp logdispatcher.cpp logtostd.cpp logtostdcoloured.cpp synchronouslogdispatcher.cpp \
+	  logtofile.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 PORTOBJS = posixmutex.o
 

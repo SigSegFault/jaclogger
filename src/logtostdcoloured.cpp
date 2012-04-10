@@ -27,15 +27,6 @@
 namespace jacl
 {
 
-LogToStdColoured::LogToStdColoured()
-    :LogDispatcher()
-{
-}
-
-LogToStdColoured::~LogToStdColoured()
-{
-}
-
 void LogToStdColoured::infoMessage(const char * message, int len)
 {
     fprintf(stdout, "\033[1;34m%.*s\033[0m", len, message);

@@ -1,7 +1,5 @@
 Just another cpp logger :>
 
-jaclogger
-
 Todo list:
 • enlarge family of dispatchers (UDP/TCP sockets, Syslog ...)
 • prefix for dispatchers
@@ -10,7 +8,7 @@ Todo list:
 • callbacks for custom printf
 • config
 • asserts
-• nodebug
+• NDEBUG
 • iostream
 • thread safe dispatcher family and ability to disable safety during compilation of library and at runtime
 

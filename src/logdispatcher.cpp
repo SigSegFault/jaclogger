@@ -25,14 +25,6 @@
 #include "../port/mutex.h"
 #include <stdio.h>
 
-#ifndef LOGGER_DEBUG_PREFIX
-#define LOGGER_DEBUG_PREFIX         "[debug] "
-#endif
-#ifndef LOGGER_ERROR_PREFIX
-#define LOGGER_ERROR_PREFIX         "[error] "
-#endif
-
-
 namespace jacl
 {
 

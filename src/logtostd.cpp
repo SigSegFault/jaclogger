@@ -26,15 +26,6 @@
 namespace jacl
 {
 
-LogToStd::LogToStd()
-    :LogDispatcher()
-{
-}
-
-LogToStd::~LogToStd()
-{
-}
-
 void LogToStd::infoMessage(const char * message, int len)
 {
     LogDispatcher::infoMessage(message, len);

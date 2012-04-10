@@ -32,7 +32,6 @@ namespace jacl
 {
 
 SynchronousLogDispatcher::SynchronousLogDispatcher()
-    :LogDispatcher()
 {
 #ifdef THREAD_SAFE_LOGGER
     mMutex = getPlatfromSpecificMutex();
