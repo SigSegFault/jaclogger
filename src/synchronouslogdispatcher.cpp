@@ -49,7 +49,7 @@ SynchronousLogDispatcher::~SynchronousLogDispatcher()
 void SynchronousLogDispatcher::sink(uint32_t type, const char *message, int len)
 {
 #ifdef THREAD_SAFE_LOGGER
-        ScopedGuard gandalf(this->mMutex);
+        ScopedGuard gandalf(mSync ? this->mMutex : 0);
 #endif
     LogDispatcher::sink(type, message, len);
 }
