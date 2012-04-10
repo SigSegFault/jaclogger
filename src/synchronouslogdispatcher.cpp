@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "include/synchronouslogdispatcher.h"
+#include "synchronouslogdispatcher.h"
 #include "config.h"
 
 #ifdef THREAD_SAFE_LOGGER
@@ -35,7 +35,7 @@ SynchronousLogDispatcher::SynchronousLogDispatcher()
     :LogDispatcher()
 {
 #ifdef THREAD_SAFE_LOGGER
-    mMutex = (opts & ThreadUnsafe) ? 0 : getPlatfromSpecificMutex();
+    mMutex = getPlatfromSpecificMutex();
 #endif
 }
 
