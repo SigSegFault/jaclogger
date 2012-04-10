@@ -1,3 +1,30 @@
 Just another cpp logger :>
 
+jaclogger
+
+Todo list:
+• enlarge family of dispatchers (UDP/TCP sockets, Syslog ...)
+• prefix for dispatchers
+• time-stamp for both
+• custom printf
+• callbacks for custom printf
+• config
+• asserts
+• nodebug
+• iostream
+• thread safe dispatcher family and ability to disable safety during compilation of library and at runtime
+
+
+Important features planned:
+• thread safety
+• ability to disable it during compilation of library and at runtime (for performance reasons)
+• reenter-ability
+• cross-platform
+• exception safety
+
+Current features:
+• Thread safe logger
+• Several dispatchers
+• One to many relation between logger and dispatchers
+
 Something else sould be written here some day.

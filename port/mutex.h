@@ -47,17 +47,17 @@ public:
     inline ScopedGuard(Mutex * mutex)
         :mMutex(mutex), mReleased(false)
     {
-        mMutex->lock();
+        mMutex && mMutex->lock();
     }
 
     inline ~ScopedGuard()
     {
-        mReleased || mMutex->unlock();
+        mMutex && (mReleased || mMutex->unlock());
     }
 
     inline void release()
     {
-        !mReleased && mMutex->unlock();
+        mMutex && !mReleased && mMutex->unlock();
         mReleased = true;
     }
 

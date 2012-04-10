@@ -24,9 +24,7 @@
 #ifndef LOGGERDEST_H
 #define LOGGERDEST_H
 
-#include <stdio.h>
 #include <stdint.h>
-#include <string>
 
 #define LOGGER_USE_USE_UDP
 #ifdef LOGGER_USE_USE_UDP
@@ -35,8 +33,6 @@
 
 namespace jacl
 {
-
-class Mutex;
 
 class LogDispatcher
 {
@@ -56,10 +52,13 @@ protected:
     virtual void debugMessage(const char * message, int len) = 0;
     virtual void errorMessage(const char * message, int len) = 0;
 
-private:
+    /// Logger interface
     friend class Logger;
-    void sink(uint32_t type, const char * message, int len = -1);
-    void sink(uint32_t type, std::string & message);
+    virtual void sink(uint32_t type, const char * message, int len = -1);
+
+private:
+    LogDispatcher(const LogDispatcher &);
+    void operator=(const LogDispatcher &);
 
     uint32_t    mMask;
 };

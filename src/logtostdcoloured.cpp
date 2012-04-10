@@ -22,6 +22,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "logtostdcoloured.h"
+#include <stdio.h>
 
 namespace jacl
 {

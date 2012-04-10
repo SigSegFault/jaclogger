@@ -21,66 +21,37 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "../include/logdispatcher.h"
-#include "../port/mutex.h"
-#include <stdio.h>
+#ifndef SYNCHRONOUSLOGDISPATCHER_H
+#define SYNCHRONOUSLOGDISPATCHER_H
 
-#ifndef LOGGER_DEBUG_PREFIX
-#define LOGGER_DEBUG_PREFIX         "[debug] "
-#endif
-#ifndef LOGGER_ERROR_PREFIX
-#define LOGGER_ERROR_PREFIX         "[error] "
-#endif
-
+#include "logdispatcher.h"
 
 namespace jacl
 {
 
-LogDispatcher::LogDispatcher(uint32_t mask)
-    :mMask(mask)
-{
-}
+class Mutex;
 
-LogDispatcher::~LogDispatcher()
+class SynchronousLogDispatcher : public LogDispatcher
 {
-}
+public:
+    SynchronousLogDispatcher();
+    virtual ~SynchronousLogDispatcher() = 0;
 
-void LogDispatcher::infoMessage(const char *message, int len)
-{
-    fprintf(stdout, "%.*s", len, message);
-    fflush(stdout);
-}
+    inline SynchronousLogDispatcher & setSynchronous(bool yes = true) {mSync = yes; return *this;}
+    inline bool isSynchronous() {return mSync;}
 
-void LogDispatcher::debugMessage(const char *message, int len)
-{
-    fprintf(stdout, LOGGER_DEBUG_PREFIX"%.*s", len, message);
-    fflush(stdout);
-}
+protected:
+    virtual void infoMessage(const char * message, int len) = 0;
+    virtual void debugMessage(const char * message, int len) = 0;
+    virtual void errorMessage(const char * message, int len) = 0;
 
-void LogDispatcher::errorMessage(const char *message, int len)
-{
-    fprintf(stderr, LOGGER_ERROR_PREFIX"%.*s", len, message);
-    fflush(stderr);
-}
+    virtual void sink(uint32_t type, const char * message, int len = -1);
 
-void LogDispatcher::sink(uint32_t type, const char *message, int len)
-{
-    switch(type)
-    {
-    case LOG_INFO:
-        if(mMask && LOG_INFO)
-            infoMessage(message, len);
-        break;
-    case LOG_DEBUG:
-        if(mMask && LOG_DEBUG)
-            debugMessage(message, len);
-        break;
-    case LOG_ERROR:
-        if(mMask && LOG_ERROR)
-            errorMessage(message, len);
-        break;
-    default: break;
-    }
-}
+private:
+    bool        mSync;
+    Mutex *     mMutex;
+};
 
 }
+
+#endif // SYNCHRONOUSLOGDISPATCHER_H

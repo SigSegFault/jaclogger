@@ -28,7 +28,7 @@
 #include <netinet/in.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <string.h>
+#include <string>
 
 #include "config.h"
 #include "logdispatcher.h"
@@ -36,12 +36,24 @@
 namespace jacl
 {
 
+class Mutex;
+
 class Logger
 {
 public:
     Logger();
-    /// Autoinclude stdout/stderr to destinations
-    Logger(int);
+
+
+    enum ConstructOptions {
+        /// Do not synchronize critical sections.
+        /// Has no effect if library is compiled without thread safety.
+        ThreadUnsafe            = 0x1,
+        /// Autoinclude LogToStd destination.
+        IncludeStd              = 0x2
+    };
+    /// Obviously options can be grouped using | operator.
+    Logger(ConstructOptions opts);
+
     ~Logger();
 
     Logger & info(const char * fmt, ...);

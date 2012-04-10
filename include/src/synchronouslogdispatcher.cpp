@@ -21,66 +21,37 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "../include/logdispatcher.h"
+#include "include/synchronouslogdispatcher.h"
+#include "config.h"
+
+#ifdef THREAD_SAFE_LOGGER
 #include "../port/mutex.h"
-#include <stdio.h>
-
-#ifndef LOGGER_DEBUG_PREFIX
-#define LOGGER_DEBUG_PREFIX         "[debug] "
 #endif
-#ifndef LOGGER_ERROR_PREFIX
-#define LOGGER_ERROR_PREFIX         "[error] "
-#endif
-
 
 namespace jacl
 {
 
-LogDispatcher::LogDispatcher(uint32_t mask)
-    :mMask(mask)
+SynchronousLogDispatcher::SynchronousLogDispatcher()
+    :LogDispatcher()
 {
+#ifdef THREAD_SAFE_LOGGER
+    mMutex = (opts & ThreadUnsafe) ? 0 : getPlatfromSpecificMutex();
+#endif
 }
 
-LogDispatcher::~LogDispatcher()
+SynchronousLogDispatcher::~SynchronousLogDispatcher()
 {
+#ifdef THREAD_SAFE_LOGGER
+    delete mMutex;
+#endif
 }
 
-void LogDispatcher::infoMessage(const char *message, int len)
+void SynchronousLogDispatcher::sink(uint32_t type, const char *message, int len)
 {
-    fprintf(stdout, "%.*s", len, message);
-    fflush(stdout);
-}
-
-void LogDispatcher::debugMessage(const char *message, int len)
-{
-    fprintf(stdout, LOGGER_DEBUG_PREFIX"%.*s", len, message);
-    fflush(stdout);
-}
-
-void LogDispatcher::errorMessage(const char *message, int len)
-{
-    fprintf(stderr, LOGGER_ERROR_PREFIX"%.*s", len, message);
-    fflush(stderr);
-}
-
-void LogDispatcher::sink(uint32_t type, const char *message, int len)
-{
-    switch(type)
-    {
-    case LOG_INFO:
-        if(mMask && LOG_INFO)
-            infoMessage(message, len);
-        break;
-    case LOG_DEBUG:
-        if(mMask && LOG_DEBUG)
-            debugMessage(message, len);
-        break;
-    case LOG_ERROR:
-        if(mMask && LOG_ERROR)
-            errorMessage(message, len);
-        break;
-    default: break;
-    }
+#ifdef THREAD_SAFE_LOGGER
+        ScopedGuard gandalf(this->mMutex);
+#endif
+    LogDispatcher::sink(type, message, len);
 }
 
 }

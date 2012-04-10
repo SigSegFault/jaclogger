@@ -35,6 +35,8 @@ public:
     LogToStdColoured();
     virtual ~LogToStdColoured();
 
+    // Todo: colours
+
 protected:
     virtual void infoMessage(const char * message, int len);
     virtual void debugMessage(const char * message, int len);

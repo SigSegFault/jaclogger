@@ -34,19 +34,11 @@
 
 #ifdef THREAD_SAFE_LOGGER
 #include "../port/mutex.h"
-#else
-//class Mutex {};
 #endif
 
 #define CSTRING_LEN(str)            (sizeof(str) -1)
 #define DEFINE_CSTRING(name, value) static const char * name = value; static const uint32_t name##_len = CSTRING_LEN(value);
-#define ALLOC_ERROR_STRING          "Logger: could not allocate space for log message.\n"
-#ifndef LOGGER_DEBUG_PREFIX
-#define LOGGER_DEBUG_PREFIX         "[debug] "
-#endif
-#ifndef LOGGER_ERROR_PREFIX
-#define LOGGER_ERROR_PREFIX         "[error] "
-#endif
+#define ALLOC_ERROR_STRING          "[Logger, internal]: could not allocate space for log message.\n"
 
 namespace jacl
 {
@@ -70,12 +62,13 @@ Logger::Logger()
 #endif
 }
 
-Logger::Logger(int)
+Logger::Logger(ConstructOptions opts)
 {
 #ifdef THREAD_SAFE_LOGGER
-    mMutex = getPlatfromSpecificMutex();
+    mMutex = (opts & ThreadUnsafe) ? 0 : getPlatfromSpecificMutex();
 #endif
-    mDestinations.push_back(new LogToStd);
+    if((opts & IncludeStd))
+        mDestinations.push_back(new LogToStd);
 }
 
 Logger::~Logger()
@@ -253,7 +246,7 @@ Logger & Logger::Error(const std::string & fmt, ...)
 
 Logger & Logger::getDefault()
 {
-    static Logger def(0);
+    static Logger def(IncludeStd);
     return def;
 }
 
