@@ -10,7 +10,6 @@ Todo list:
 • logged asserts
 • respect NDEBUG to disable logging like in assert()
 • iostream
-• thread safe dispatcher family and ability to disable safety during compilation of library and at runtime
 
 
 Important features planned:
@@ -20,9 +19,8 @@ Important features planned:
 • exception safety
 
 Current features:
-• thread safe logger
-• thread safe dispatchers
-• ability to disable thread safety it during compilation of library and at runtime (for performance reasons)
+• thread safe logger and bility to disable thread safety during compilation of library and at runtime (for performance reasons)
+• thread safe dispatcher family and ability to disable safety during compilation of library and at runtime
 • several dispatchers
 • one to many relation between logger and dispatchers
 
