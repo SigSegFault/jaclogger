@@ -45,16 +45,6 @@ namespace jacl
 
 DEFINE_CSTRING(alloc_error_str, ALLOC_ERROR_STRING)
 
-// Todo: move this thingy somewhere else
-template <typename Poor>
-void grimDestructor(Poor * thingy) { delete thingy;}
-
-template <typename Thingy>
-class PointerGuard
-{
-    PointerGuard(Thingy * thingy);
-};
-
 Logger::Logger()
 {
 #ifdef THREAD_SAFE_LOGGER
@@ -68,13 +58,15 @@ Logger::Logger(ConstructOptions opts)
     mMutex = (opts & ThreadUnsafe) ? 0 : getPlatfromSpecificMutex();
 #endif
     if((opts & IncludeStd))
-        mDestinations.push_back(new LogToStd);
+        mDispatchers["default"] = new LogToStd;
 }
 
 Logger::~Logger()
 {
-    std::for_each(mDestinations.begin(), mDestinations.end(), grimDestructor<LogDispatcher>);
-    mDestinations.clear();
+    DispatcherSet::iterator it = mDispatchers.begin();
+    while(it != mDispatchers.end())
+        delete (it++)->second;
+    mDispatchers.clear();
 #ifdef THREAD_SAFE_LOGGER
     delete mMutex;
 #endif
@@ -188,6 +180,46 @@ Logger & Logger::setPrefix(const char * fmt, ...)
     return *this;
 }
 
+LogDispatcher * Logger::popDispatcher(const std::string &name)
+{
+#ifdef THREAD_SAFE_LOGGER
+    ScopedGuard gandalf(this->mMutex);
+#endif
+    DispatcherSet::iterator it = mDispatchers.find(name);
+    if(it != mDispatchers.end())
+    {
+        LogDispatcher * out = it->second;
+        mDispatchers.erase(it);
+        return out;
+    }
+    return 0;
+}
+
+Logger & Logger::pushDispatcher(const std::string &name, LogDispatcher *dispatcher)
+{
+#ifdef THREAD_SAFE_LOGGER
+    ScopedGuard gandalf(this->mMutex);
+#endif
+    DispatcherSet::iterator it = mDispatchers.find(name);
+    if(it != mDispatchers.end())
+        mDispatchers.erase(it);
+    if(dispatcher)
+        mDispatchers[name] = dispatcher;
+    return *this;
+}
+
+Logger &Logger::clear()
+{
+#ifdef THREAD_SAFE_LOGGER
+    ScopedGuard gandalf(this->mMutex);
+#endif
+    DispatcherSet::iterator it = mDispatchers.begin();
+    while(it != mDispatchers.end())
+        delete (it++)->second;
+    mDispatchers.clear();
+    return * this;
+}
+
 Logger & Logger::Debug(const char * fmt, ...)
 {
     va_list vl;
@@ -285,13 +317,9 @@ void Logger::mRelay(LogDispatcher::LogType type, const char *fmt, va_list vl)
         sBuf[size++] = '\n';
     }
 
-#ifdef THREAD_SAFE_LOGGER
-    gandalf.release();
-#endif
-
-    for(DispatcherList::const_iterator it = mDestinations.begin();
-        it != mDestinations.end(); ++it)
-        (*it)->sink(type, dBuf, size);
+    for(DispatcherSet::const_iterator it = mDispatchers.begin();
+        it != mDispatchers.end(); ++it)
+        (*it).second->sink(type, dBuf, size);
     if(dBuf != sBuf) free(dBuf);
 }
 

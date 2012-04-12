@@ -24,7 +24,7 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#include <list>
+#include <map>
 #include <netinet/in.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -69,6 +69,10 @@ public:
     Logger & setPrefix(const std::string & prefix);
     Logger & setPrefix(const char * fmt, ...);
 
+    LogDispatcher * popDispatcher(const std::string & name);
+    Logger & pushDispatcher(const std::string & name, LogDispatcher * dispatcher);
+    Logger & clear();
+
 
     /// Lazy programmer API. Executes on default logger.
 
@@ -88,8 +92,8 @@ private:
 
     void mRelay(LogDispatcher::LogType type, const char * fmt, va_list vl);
 
-    typedef std::list<LogDispatcher *> DispatcherList;
-    DispatcherList  mDestinations;
+    typedef std::map<std::string, LogDispatcher *> DispatcherSet;
+    DispatcherSet   mDispatchers;
     Mutex *         mMutex;
     uint32_t        mDebugLevel;
     std::string     mPrefix;

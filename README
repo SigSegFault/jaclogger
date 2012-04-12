@@ -20,8 +20,7 @@ Important features planned:
 
 Current features:
 • thread safe logger and bility to disable thread safety during compilation of library and at runtime (for performance reasons)
-• thread safe dispatcher family and ability to disable safety during compilation of library and at runtime
 • several dispatchers
-• one to many relation between logger and dispatchers
+• one to many relation between logger and dispatchers, so you can have any number of different dispatchers to be attached to logger
 
 Something else sould be written here some day.

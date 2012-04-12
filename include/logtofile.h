@@ -24,7 +24,7 @@
 #ifndef LOGTOFILE_H
 #define LOGTOFILE_H
 
-#include "synchronouslogdispatcher.h"
+#include "logdispatcher.h"
 #include <string>
 
 #if     !defined(POSIX) && !defined(_POSIX) && !defined(_POSIX_SOURCE)
@@ -34,7 +34,7 @@
 namespace jacl
 {
 
-class LogToFile : public SynchronousLogDispatcher
+class LogToFile : public LogDispatcher
 {
 public:
     LogToFile(const char * filename = 0);
